@@ -8,7 +8,7 @@ using MAT
 using Base: @kwdef
 using JLD2
 
-function nmae(pred, truevalue, weights=1)
+function mnae(pred, truevalue, weights=1)
     error = abs.(truevalue-pred)./abs.(truevalue);
     if weights == 1
         error = mean(error)
@@ -32,7 +32,9 @@ function get_filename(mod, crit)
     return "../../CAI2R_T1rho_phantom\\data\\Syn_noise\\images\\rec_images_$(mod)_$(crit)1.mat"
 end
 
-model = "biexp"; #monoexp, stexp or biexp
+model = ARGS[1];
+println(model)
+# model = "biexp"; #monoexp, stexp or biexp
 crits = ["lin", "log", "crlb", "mcrlb"];
 crit_titles =["Linear Spaced" "Log Spaced" "CRLB" "MCRLB" "Ground Truth"];
 
@@ -44,6 +46,7 @@ if model == "monoexp"
     bds = [0.0 20; 1e10 70];
     w = [0; 1];
     sp = [1.0+0im; 45];
+    lim = [(0, 70)];
 elseif model == "stexp"
     P = 2;
     parameters = ["Tmap", "Bmap"];
@@ -51,6 +54,7 @@ elseif model == "stexp"
     bds = [0.0 20 0.1; 1e10 70 1.0];
     w = [0; 1; 1];
     sp = [1.0+0im; 45; 0.5];
+    lim = [(0, 70) (0.0, 1.0)];
 elseif model == "biexp"
     P = 3;
     parameters = ["Fmap", "Tmap", "Tsmap"]
@@ -58,13 +62,14 @@ elseif model == "biexp"
     bds = [0.0 0.05 15 0.1; 1e10 0.95 100 10.0];
     w = [0; 1; 1; 1];
     sp = [1.0+0im; 0.5; 55; 5.5];
+    lim = [(0.0, 1.0) (0, 100) (0, 10)];
 else
     error("Model not recognized")
 end
 C = length(crits)+1;
 
-Map = zeros(ComplexF64, (L,L,P*C))
-
+Map = zeros(ComplexF64, (L,L,P*C));
+errors = zeros(Float64, (P*C));
 for (i, crit) in enumerate(crits)
     st = get_filename(model, crit);
     file = matopen(st);
@@ -92,28 +97,19 @@ for (i, crit) in enumerate(crits)
         if i == 1
             Map[:, :, j*C] = data[parameters[j]];
         end
-        # Map[:, :, i] = reshape(abs.(p̂[j,:]), size(mask));
         Map[:, :, i+(j-1)*C] = reshape(abs.(p̂[j+1,:]), size(mask));
+        errors[i+(j-1)*C] = mnae(Map[mask, i+(j-1)*C], data[parameters[j]][mask])
     end
 end 
 
-##
-# t1 = heatmap(abs.(Map[:,:,1]), color=:jet, title="Linear Spaced");
-# t2 = heatmap(abs.(Map[:,:,2]), color=:jet, title="Log Spaced");
-# t3 = heatmap(abs.(Map[:,:,3]), color=:jet, title="CRLB");
-# t4 = heatmap(abs.(Map[:,:,4]), color=:jet, title="MCRLB");
-# t5 = heatmap(abs.(Map[:,:,5]), color=:jet, title="Ground Truth");
-# t6 = heatmap(abs.(Map[:,:,6]), color=:jet);
-# t7 = heatmap(abs.(Map[:,:,7]), color=:jet);
-# t8 = heatmap(abs.(Map[:,:,8]), color=:jet);
-# t9 = heatmap(abs.(Map[:,:,9]), color=:jet);
-# t10 = heatmap(abs.(Map[:,:,10]), color=:jet);
 
 cbs = permutedims([mod(i,C)==0 for i in 1:P*C]);
 titles = [i <= C ? crit_titles[i] : "" for i in 1:P*C];
 ylabels = [mod(i-1,C) == 0 ? parameter_titles[1+div(i,C)] : "" for i in 1:P*C];
+xlabels = [mod(i, C)==0 ? "" : "MNAE=$(round.(errors[i], digits=4))" for i in 1:P*C];
+lims = [lim[div(i-1,C)+1] for i in 1:P*C];
 
-img = plot([heatmap(abs.(Map[:,:,i]), color=:jet, title=titles[i], ylabel=ylabels[i], yguidefontrotation = -90) for i in 1:P*C]...,
+img = plot([heatmap(abs.(Map[:,:,i]), color=:jet, title=titles[i], ylabel=ylabels[i], yguidefontrotation = -90, xlabel=xlabels[i], clims=lims[i]) for i in 1:P*C]...,
     layout=(P,C), yflip=true, ticks=nothing, 
     colorbar=cbs, margin=10px, size=[1600,260*P+100])
 savefig(img, "images//$(model).png")
