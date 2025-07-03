@@ -1,16 +1,10 @@
-#using Pkg
-#Pkg.add("Statistics")
-#Pkg.add("MAT")
-#Pkg.add("LinearAlgebra")
-#Pkg.add("JLD2")
+
 include("TRCG_NLS.jl")
 using Base.Threads
 # using Plots
 using Statistics
 using MAT
 using Base: @kwdef
-# using LightXML
-# using Printf: @sprintf
 using JLD2
 # plotlyjs()
 

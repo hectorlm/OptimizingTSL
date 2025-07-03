@@ -8,17 +8,17 @@ using LinearAlgebra: norm
 function pocs(x::Vector{ComplexF64}, bounds::Matrix{Float64})
     @assert(length(x)==size(bounds,2))
     # px = similar(x);
-    x[1] = sign.(x[1]).*min.(max.(abs.(x[1]), bounds[1,1]), bounds[2,1]);
-    x[2:end] = min.(max.(real.(x[2:end]), bounds[1,2:end]), bounds[2,2:end]);
+    x[1] = sign.(@view x[1]).*min.(max.(abs.(x[1]), bounds[1,1]), bounds[2,1]);
+    x[2:end] = min.(max.(real.(@view x[2:end]), @view bounds[1,2:end]),@view bounds[2,2:end]);
     return x
 end
 
 
-function nls_trcg(b::Vector{ComplexF64}, TSLs::Vector{Float64}, p0::Vector{ComplexF64}, bounds::Matrix{Float64}, model::String, model_var::String, maxiter=3500, refsse=1e200)
-    errorTol = 1e-7;
+function nls_trcg(b::Vector{ComplexF64}, TSLs::Vector{Float64}, p0::Vector{ComplexF64}, bounds::Matrix{Float64}, model::String, model_var::String; maxiter=10000, refsse=1e200)
+    errorTol = 1e-9;
     cgtol = 1e-17;
     p = p0;
-    p = pocs(p, bounds);
+    p .= pocs(p, bounds);
     Cost = zeros(Float64, (maxiter));
     p_diff = zeros(Float64, (maxiter));
     delta_k = zeros(Float64, (maxiter));
@@ -43,25 +43,27 @@ function nls_trcg(b::Vector{ComplexF64}, TSLs::Vector{Float64}, p0::Vector{Compl
     end
     fw = f(p, TSLs)[:];
     res = b - fw;
-
+    J = fJ(p, TSLs);
+    g = J'*res;
+    z = zeros(ComplexF64, size(g));
     k=1;
     L2cost = sum(abs.(res).^2);
     Cost[k] = L2cost;
     
-    DOF = length(p) + 2;
+    DOF = length(p) + 3;
 
     costdown = true;
     costdown_old = true;
     stopping = false;
-    delta = 1e-9;
-    # delta_k = [];
+    delta = 1e-1;
+    # delta = 1e-12;
     p_diff[k] = errorTol+eps();
     # iterations
     while( ~stopping && (k<maxiter))
         p_old = p;
         res_old = res;
         L2cost_old = L2cost;
-        J = fJ(p, TSLs);
+        J .= fJ(p, TSLs);
 
         g = J'*res;
         A = J'J;
@@ -69,7 +71,7 @@ function nls_trcg(b::Vector{ComplexF64}, TSLs::Vector{Float64}, p0::Vector{Compl
         # CG limited to the trust region
         d = g;
         gg = g'*g;
-        z = zeros(size(g));
+        z = zeros(ComplexF64, size(g));
         CGiter = true;
         j=1;
         while(CGiter)
@@ -77,7 +79,7 @@ function nls_trcg(b::Vector{ComplexF64}, TSLs::Vector{Float64}, p0::Vector{Compl
                 h=z;
                 CGiter = false;
             end
-            Ad=A*d;
+            Ad = A*d;
 
             alpha = gg/abs.(d'*Ad);
             zn = z + alpha*d;
@@ -126,34 +128,33 @@ function nls_trcg(b::Vector{ComplexF64}, TSLs::Vector{Float64}, p0::Vector{Compl
         h = p - p_old;
         pred = 1 .*(-g'*h + .5*h'*A*h);
 
-        # conferir essa parte
-        # again = ~costdown && ~costdown_old;
         costdown_old = costdown;
         costdown = L2cost < (L2cost_old + 10*eps());
 
         rho = (L2cost_old - L2cost)/(abs(pred)+eps());
-        delta = .25*delta*(rho<.25) + delta*((rho>=.25) & (rho<=0.75)) + 2*delta*(rho>.75);
+        M = 10;
+        if rho<.25
+            delta /= 1.5*M;
+        elseif rho>.75
+            delta *= 1.0*M;
+        end
         delta_k[k] = delta;
-        # if k>000
-        p = p*costdown + p_old*(~costdown);
         if ~costdown
             L2cost = L2cost_old;
+            p = p_old;
+            res = res_old;
         end
-        res = res*costdown + res_old*(~costdown);
-        # end
-
         k += 1;
 
         Cost[k] = L2cost;
         p_diff[k] = norm(p-p_old,2)/norm(p);
         ki = max(1, k-100);
-        if ((k>100) && sum(~costdown)==0 && (sum(p_diff[ki:k])<errorTol) && (L2cost<=refsse))
+        if ((k>100) && (~costdown)==0 && (sum(p_diff[ki:k])<errorTol) && (L2cost<=refsse))
             stopping = true;
+            # Cost[k+1:end] .= Cost[k];
         end
-
-        # Cost = vcat(Cost, sum(L2cost));
     end
-    return p, Cost, p_diff
+    return p, Cost, p_diff, delta_k
 end
 
 function fw_mo(p::Vector{ComplexF64}, TSLs::Vector{Float64})
