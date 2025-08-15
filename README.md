@@ -60,4 +60,6 @@ This project requires Julia with the dependencies specified in `Project.toml`. T
 
 ## Citation
 
-If you use this code in your research, please consider citing the related scientific work that demonstrates its application in quantitative MRI, including the study published in Scientific Reports (Nature) that validates these optimization methods.
+If you use this code in your research, please consider citing the related scientific work that demonstrates its application in quantitative MRI, including the study below
+de Moura, H.L., Menon, R.G., Zibetti, M.V.W. et al. Optimization of spin-lock times for T1ρ mapping of human knee cartilage with bi- and stretched-exponential models. Sci Rep 12, 16829 (2022). https://doi.org/10.1038/s41598-022-21269-2
+
