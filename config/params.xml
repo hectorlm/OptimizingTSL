@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<struct>
+    <data_path>../TSL_opt_Hector/sampling_times/</data_path>
+    <SNR>30</SNR>
+    <SNR>125</SNR>
+    <TSLs>4</TSLs>
+    <TSLs>5</TSLs>
+    <TSLs>6</TSLs>
+    <TSLs>7</TSLs>
+    <TSLs>8</TSLs>
+    <mcrlb>CRLB</mcrlb>
+    <mcrlb>MCRLB</mcrlb>
+    <crit>mean</crit>
+    <crit>max</crit>
+    <time_rate>T1rho</time_rate>
+    <time_rate>R1rho</time_rate>
+</struct>

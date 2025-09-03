@@ -8,4 +8,4 @@
 module purge
 module load julia
 
-julia validation_tsl_crlb_biexp_NLS.jl
+julia ../validation/crlb/validation_tsl_crlb_biexp_NLS.jl

@@ -39,11 +39,40 @@ These improvements make quantitative MRI more practical for clinical application
 
 ## Repository Structure
 
-- `TRCG_NLS.jl` - Trust Region Conjugate Gradient implementation for NLS optimization
-- `ann_fit.jl` - Artificial Neural Network fitting routines
-- `validation_*.jl` - Various validation scripts for different models and approaches
-- `plotting_results_NLS.jl` - Visualization tools for optimization results
-- Shell scripts (`run_*.sh`) - Batch processing utilities
+### Core Components
+
+- `src/optimization/` - Core optimization algorithms
+  - `TRCG_NLS.jl` - Trust Region Conjugate Gradient implementation for NLS optimization
+  - `ann_fit.jl` - Artificial Neural Network fitting routines
+
+### Validation Framework
+
+- `validation/` - Validation scripts and experiments
+  - `crlb/` - Cramér-Rao Lower Bound (CRLB) validation scripts
+    - `validation_tsl_crlb_*_NLS.jl` - NLS-based CRLB validation for different models
+    - `validation_tsl_crlb_*_NN.jl` - Neural Network-based CRLB validation
+  - `nonopt/` - Non-optimized approach validation scripts
+    - `validation_tsl_nonopt_*.jl` - Validation scripts for traditional approaches
+  - `validation_phantom.jl` - Phantom validation experiments
+  - `validation_tsl_nls.jl` - General TSL NLS validation
+
+### Visualization and Analysis
+
+- `visualization/` - Data visualization and analysis tools
+  - `plotting_results_NLS.jl` - Visualization tools for optimization results
+  - `jld2_to_xlsx.jl` - Data format conversion utilities
+
+### Configuration and Scripts
+
+- `config/` - Configuration files
+  - `params.xml` - Parameter configuration file
+- `scripts/` - Batch processing and execution scripts
+  - `run_*.sh` - Shell scripts for batch processing different validation experiments
+
+### Project Configuration
+
+- `Project.toml` - Julia project dependencies
+- `Manifest.toml` - Julia package manifest
 
 ## Applications
 
@@ -57,6 +86,46 @@ This project requires Julia with the dependencies specified in `Project.toml`. T
 2. Install Julia dependencies: `julia --project=. -e "using Pkg; Pkg.instantiate()"`
 3. Run validation scripts to verify installation
 4. Adapt the optimization routines for your specific qMRI application
+
+OptimizingTSL/
+├── README.md                    # Project documentation
+├── Project.toml                 # Julia project configuration
+├── Manifest.toml               # Julia package manifest
+├── config/                     # Configuration files
+│   └── params.xml              # Parameter configuration
+├── src/                        # Source code
+│   └── optimization/           # Core optimization algorithms
+│       ├── TRCG_NLS.jl        # Trust Region Conjugate Gradient for NLS
+│       └── ann_fit.jl         # Artificial Neural Network fitting
+├── validation/                 # Validation framework
+│   ├── crlb/                  # CRLB validation scripts
+│   │   ├── validation_tsl_crlb_biexp_NLS.jl
+│   │   ├── validation_tsl_crlb_biexp_NN.jl
+│   │   ├── validation_tsl_crlb_mono_NLS.jl
+│   │   ├── validation_tsl_crlb_mono_NN.jl
+│   │   ├── validation_tsl_crlb_stexp_NLS.jl
+│   │   └── validation_tsl_crlb_stexp_NN.jl
+│   ├── nonopt/                # Non-optimized validation scripts
+│   │   ├── validation_tsl_nonopt_biexp_NLS.jl
+│   │   ├── validation_tsl_nonopt_nls.jl
+│   │   └── validation_tsl_nonopt_stexp_NLS.jl
+│   ├── validation_phantom.jl   # Phantom validation experiments
+│   └── validation_tsl_nls.jl   # General TSL NLS validation
+├── visualization/              # Visualization and analysis tools
+│   ├── plotting_results_NLS.jl # Result visualization
+│   └── jld2_to_xlsx.jl        # Data conversion utilities
+└── scripts/                   # Batch processing scripts
+    ├── run_bi_nls.sh          # Biexponential NLS batch script
+    └── run_mono_nls.sh        # Monoexponential NLS batch script
+```
+
+## Usage
+
+- Find core algorithms in `src/optimization/`
+- Run validation experiments from `validation/` subdirectories
+- Generate visualizations using tools in `visualization/`
+- Execute batch jobs using scripts in `scripts/`
+- Configure parameters via files in `config/`
 
 ## Citation
 

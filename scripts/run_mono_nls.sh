@@ -11,5 +11,4 @@ module purge
 module load julia
 
 export JULIA_NUM_THREADS=40
-julia juliatest.jl
-julia validation_tsl_crlb_mono_NLS.jl
+julia ../validation/crlb/validation_tsl_crlb_mono_NLS.jl $1
